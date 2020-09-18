@@ -24,7 +24,7 @@ Route::get('/', function () {
 /*Route::get('/produtos','ControladorProduto@index');
 Route::get('/categorias','ControladorCategoria@index');*/
 
-Route::get('/produtos', [ControladorProduto::class, 'index']);
+Route::get('/produtos', [ControladorProduto::class, 'indexView']);
 //criar novo produto
 Route::get('/produtos/novo', [ControladorProduto::class, 'create']);
 //salvar novo produto
