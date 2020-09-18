@@ -6,13 +6,13 @@
         <div class="card-body">
             <h5 class="card-title">Cadastro de Produtos</h5>
 
-            <table class="table table-sm table-hover table-bordered">
+            <table class="table table-sm table-hover table-bordered" id="tabelaProdutos">
                 <thead>
                     <th>Codigo</th>
                     <th>Nome</th>
                     <th>Estoque</th>
                     <th>Preço</th>
-                    <th>Categoria</th>
+                    <th>Departamento</th>
                     <th>Opções</th>
                 </thead>
                 <tbody>
@@ -88,8 +88,8 @@
 
             $('#dlgprodutos').modal('show')
         }
-        
-        //funcaopara carregar os dados de categoria
+
+        //funcao para carregar os dados de categoria
         function carregarCategorias() {
             $.getJSON('/api/categorias', function(data) {
                 for (i = 0; i < data.length; i++) {
@@ -99,9 +99,37 @@
             });
         }
 
+        function montarLinha(p) {
+            var linha = "<tr>" +
+                "<td>" + p.id + "</td>" +
+                "<td>" + p.name + "</td>" +
+                "<td>" + p.stock + "</td>" +
+                "<td>" + p.price + "</td>" +
+                "<td>" + p.categoria_id + "</td>" +
+                "<td>" +
+                '<button class="btn btn-sm btn-primary">Editar</button>' +
+                '<button class="btn btn-sm btn-danger">Apagar</button>' +
+                "</td>" +
+                "</tr>"
+
+                return linha;
+        }
+
+        function carregarProdutos() {
+            $.getJSON('/api/produtos', function(produtos) {
+
+                for (i = 0; i < produtos.length; i++) {
+                    linha = montarLinha(produtos[i]);
+                    $("#tabelaProdutos>tbody").append(linha);
+
+                }
+            });
+        }
+
         //função json para carregar os dados assim que a pagina for carregada
         $(function() {
-            carregarCategorias()
+            carregarCategorias();
+            carregarProdutos();
         });
 
     </script>

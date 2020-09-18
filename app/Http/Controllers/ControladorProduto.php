@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Categoria as ModelsCategoria;
 use App\Models\Produto as ModelsProduto;
 use Illuminate\Http\Request;
-use app\produto;
 
 class ControladorProduto extends Controller
 {
@@ -14,12 +13,18 @@ class ControladorProduto extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function indexView()
+    {
+        return view('produtos');
+    }
+
     public function index()
     {
-      //  $prods = ModelsProduto::all();
+        //returno do dados para a API
         $prods = ModelsProduto::all();
        
-        return view('produtos', compact('prods'));
+        return $prods->toJson();
 
     }
 
