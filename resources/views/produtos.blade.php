@@ -115,12 +115,37 @@
                 "<td>" + p.price + "</td>" +
                 "<td>" + p.categoria_id + "</td>" +
                 "<td>" +
-                '<button class="btn btn-sm btn-primary">Editar</button>' +
-                '<button class="btn btn-sm btn-danger">Apagar</button>' +
+                '<button class="btn btn-sm btn-primary" onclick="editar(' + p.id + ')">Editar</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="remover(' + p.id + ')">Apagar</button>' +
                 "</td>" +
                 "</tr>";
 
             return linha;
+        }
+
+        function remover(id) { //função ajax para remoção de produtos
+            $.ajax({
+                type: "DELETE",
+                url: "/api/produtos/" + id,
+                context: this,
+
+                success: function() { //removendo as linhas da tabela view produto sem precisar atualizar a página
+                    console.log("Apagado com sucesso");
+
+                    linhas = $('#tabelaProdutos>tbody>tr')
+
+                    e = linhas.filter(function(i, elemento) {
+                        return elemento.cells[0].textContent == id;
+                    });
+                    if (e) {
+                        e.remove();
+                    }
+                },
+
+                error: function(error) {
+                    console.log(error);
+                }
+            });
         }
 
         function carregarProdutos() { //trazer a relação de produtos para a tela
@@ -143,7 +168,7 @@
             };
 
             $.post('api/produtos', prods, function(
-            data) { //função para salvar e atualizar os dados no navegador sem dar um refresh na pagina
+                data) { //função para salvar e atualizar os dados no navegador sem dar um refresh na pagina
                 produto = JSON.parse(data);
                 linha = montarLinha(produto);
                 $("#tabelaProdutos>tbody").append(linha);
