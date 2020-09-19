@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Categoria as ModelsCategoria;
 use App\Models\Produto as ModelsProduto;
 use Illuminate\Http\Request;
-use app\produto;
 
 class ControladorProduto extends Controller
 {
@@ -14,12 +13,18 @@ class ControladorProduto extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function indexView()
+    {
+        return view('produtos');
+    }
+
     public function index()
     {
-      //  $prods = ModelsProduto::all();
+        //returno do dados para a API
         $prods = ModelsProduto::all();
        
-        return view('produtos', compact('prods'));
+        return $prods->toJson();
 
     }
 
@@ -42,13 +47,13 @@ class ControladorProduto extends Controller
     public function store(Request $request)
     {
         $prods = new ModelsProduto();
-        $prods ->name = $request->input('nomeProduto');
-        $prods ->stock = $request->input('estoqueProduto');
-        $prods ->price = $request->input('precoProduto');
-        $prods ->categoria_id = $request->input('categoriaProduto');
+        $prods ->name = $request->input('nome');
+        $prods ->stock = $request->input('estoque');
+        $prods ->price = $request->input('preco');
+        $prods ->categoria_id = $request->input('categoria_id');
 
         $prods -> save();
-        return redirect('/produtos');
+        return json_encode($prods);
     }
 
     /**
@@ -86,7 +91,7 @@ class ControladorProduto extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
     }
 
     /**
@@ -97,6 +102,9 @@ class ControladorProduto extends Controller
      */
     public function destroy($id)
     {
-        //
+        $prods = ModelsProduto::find($id);
+        if(isset($prods)){
+            $prods -> delete();
+        }
     }
 }
