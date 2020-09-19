@@ -12,7 +12,7 @@
                     <th>Nome</th>
                     <th>Estoque</th>
                     <th>Preço</th>
-                    <th>Departamento</th>
+                    <th>Categoria</th>
                     <th>Opções</th>
                 </thead>
                 <tbody>
@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <div class="modal" tabindex="-1" role="dialog" id="dlgprodutos">
+    <div class="modal" tabindex="-1" role="dialog" id="dlgProdutos">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form class="form-horizontal" id="formProduto">
@@ -68,7 +68,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
-                        <button type="cancel" class="btn btn-secondary btn-sm" data-dissmiss="modal">Cancelar</button>
+                        <button type="cancel" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -77,7 +77,15 @@
 @endsection
 
 @section('javascript')
+
+
     <script type="text/javascript">
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': "{{ csrf_token() }}"
+            }
+        })
+
         function novoProduto() {
             //limpar campos do modal caso sai sem cancelar ou confirmar
 
@@ -86,7 +94,7 @@
             $('#precoProduto').val('')
             $('#categoriaProduto').val('')
 
-            $('#dlgprodutos').modal('show')
+            $('#dlgProdutos').modal('show')
         }
 
         //funcao para carregar os dados de categoria
@@ -99,7 +107,7 @@
             });
         }
 
-        function montarLinha(p) {
+        function montarLinha(p) { //escrever os produtos na view
             var linha = "<tr>" +
                 "<td>" + p.id + "</td>" +
                 "<td>" + p.name + "</td>" +
@@ -110,12 +118,12 @@
                 '<button class="btn btn-sm btn-primary">Editar</button>' +
                 '<button class="btn btn-sm btn-danger">Apagar</button>' +
                 "</td>" +
-                "</tr>"
+                "</tr>";
 
-                return linha;
+            return linha;
         }
 
-        function carregarProdutos() {
+        function carregarProdutos() { //trazer a relação de produtos para a tela
             $.getJSON('/api/produtos', function(produtos) {
 
                 for (i = 0; i < produtos.length; i++) {
@@ -125,6 +133,28 @@
                 }
             });
         }
+
+        function criarProduto() { //função para criar um novo produto no banco de de dados
+            prods = { // criação do objeto
+                nome: $('#nomeProduto').val(),
+                estoque: $('#estoqueProduto').val(),
+                preco: $('#precoProduto').val(),
+                categoria_id: $('#categoriaProduto').val()
+            };
+
+            $.post('api/produtos', prods, function(
+            data) { //função para salvar e atualizar os dados no navegador sem dar um refresh na pagina
+                produto = JSON.parse(data);
+                linha = montarLinha(produto);
+                $("#tabelaProdutos>tbody").append(linha);
+            })
+        }
+
+        $('#formProduto').submit(function(event) {
+            event.preventDefault();
+            criarProduto();
+            $("#dlgProdutos").modal('hide'); // fechar o modal do cadastro após clicar em salvar
+        });
 
         //função json para carregar os dados assim que a pagina for carregada
         $(function() {
