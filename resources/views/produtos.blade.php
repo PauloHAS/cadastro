@@ -6,7 +6,7 @@
         <div class="card-body">
             <h5 class="card-title">Cadastro de Produtos</h5>
 
-            <table class="table table-sm table-hover table-bordered">
+            <table class="table table-sm table-hover table-bordered" id="tabelaProdutos">
                 <thead>
                     <th>Codigo</th>
                     <th>Nome</th>
@@ -23,11 +23,11 @@
 
         </div>
         <div class="card-footer">
-            <button class="btn btn-sm btn-primary" role="button" onclick="novoProduto()">Novo Produto</a>
+            <button class="btn btn-sm btn-primary" role="button" onclick="novoProduto()">Novo Produto</button>
         </div>
     </div>
 
-    <div class="modal" tabindex="-1" role="dialog" id="dlgprodutos">
+    <div class="modal" tabindex="-1" role="dialog" id="dlgProdutos">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form class="form-horizontal" id="formProduto">
@@ -35,7 +35,7 @@
                         <h5 class="modal-title">Novo Produto</h5>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" id="id" class="form-control">
+                    <input type="hidden" class="form-control" id="id" value>
                         <div class="form-group">
                             <label for="nomeProduto" class="control-label">Nome do Produto</label>
                             <div class="input-group">
@@ -68,7 +68,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
-                        <button type="cancel" class="btn btn-secondary btn-sm" data-dissmiss="modal">Cancelar</button>
+                        <button type="cancel" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -77,19 +77,27 @@
 @endsection
 
 @section('javascript')
+
+
     <script type="text/javascript">
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': "{{ csrf_token() }}"
+            }
+        })
+
         function novoProduto() {
             //limpar campos do modal caso sai sem cancelar ou confirmar
-
+            $('#id').val('');
             $('#nomeProduto').val('')
             $('#estoqueProduto').val('')
             $('#precoProduto').val('')
             $('#categoriaProduto').val('')
 
-            $('#dlgprodutos').modal('show')
+            $('#dlgProdutos').modal('show')
         }
-        
-        //funcaopara carregar os dados de categoria
+
+        //funcao para carregar os dados de categoria
         function carregarCategorias() {
             $.getJSON('/api/categorias', function(data) {
                 for (i = 0; i < data.length; i++) {
@@ -99,9 +107,140 @@
             });
         }
 
+        function montarLinha(p) { //escrever os produtos na view
+            var linha = "<tr>" +
+                "<td>" + p.id + "</td>" +
+                "<td>" + p.name + "</td>" +
+                "<td>" + p.stock + "</td>" +
+                "<td>" + p.price + "</td>" +
+                "<td>" + p.categoria_id + "</td>" +
+                "<td>" +
+                '<button class="btn btn-sm btn-primary" onclick="editar(' + p.id + ')">Editar</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="remover(' + p.id + ')">Apagar</button>' +
+                "</td>" +
+                "</tr>";
+
+            return linha;
+        }
+
+        function editar(id) {
+            $.getJSON('/api/produtos/' + id, function(data) {
+                console.log(data);
+                $('#id').val(data.id);
+                $('#nomeProduto').val(data.name)
+                $('#estoqueProduto').val(data.stock)
+                $('#precoProduto').val(data.price)
+                $('#categoriaProduto').val(data.categoria_id)
+
+                $('#dlgProdutos').modal('show')
+            });
+        }
+
+        function remover(id) { //função ajax para remoção de produtos
+            $.ajax({
+                type: "DELETE",
+                url: "/api/produtos/" + id,
+                context: this,
+
+                success: function() { //removendo as linhas da tabela view produto sem precisar atualizar a página
+                    console.log("Apagado com sucesso");
+
+                    linhas = $('#tabelaProdutos>tbody>tr')
+
+                    e = linhas.filter(function(i, elemento) {
+                        return elemento.cells[0].textContent == id;
+                    });
+                    if (e) {
+                        e.remove();
+                    }
+                },
+
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        function carregarProdutos() { //trazer a relação de produtos para a tela
+            $.getJSON('/api/produtos', function(produtos) {
+
+                for (i = 0; i < produtos.length; i++) {
+                    linha = montarLinha(produtos[i]);
+                    $("#tabelaProdutos>tbody").append(linha);
+
+                }
+            });
+        }
+
+        function criarProduto() { //função para criar um novo produto no banco de de dados
+            prods = { // criação do objeto
+                nome: $('#nomeProduto').val(),
+                estoque: $('#estoqueProduto').val(),
+                preco: $('#precoProduto').val(),
+                categoria_id: $('#categoriaProduto').val()
+            };
+
+            $.post('api/produtos', prods, function(
+                data) { //função para salvar e atualizar os dados no navegador sem dar um refresh na pagina
+                produto = JSON.parse(data);
+                linha = montarLinha(produto);
+                $("#tabelaProdutos>tbody").append(linha);
+            })
+        }
+
+        function salvarProduto(){
+            prods = { // criação do objeto
+                id : $("#id").val(), 
+                nome: $("#nomeProduto").val(),
+                estoque: $("#estoqueProduto").val(),
+                preco: $("#precoProduto").val(),
+                categoria_id: $("#categoriaProduto").val()
+            };
+
+            $.ajax({
+                type: "PUT",
+                url: "/api/produtos/" +prods.id,
+                context: this,
+                data: prods,
+
+                success: function(data) { //atualizando as linhas da tabela view produto sem precisar atualizar a página
+
+                    prods = JSON.parse(data);
+
+                linhas = $("#tabelaProdutos>tbody>tr")
+                e=linhas.filter(function(i,e){
+                    return (e.cells[0].textContent == prods.id);
+                });
+                if(e){
+                    e[0].cells[0].textContent = prods.id;
+                    e[0].cells[1].textContent = prods.name;
+                    e[0].cells[2].textContent = prods.stock;
+                    e[0].cells[3].textContent = prods.price;
+                    e[0].cells[4].textContent = prods.categoria_id;
+                }
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        $('#formProduto').submit(function(event) {
+            event.preventDefault();
+
+            if($("#id").val() != ''){
+                salvarProduto();
+
+            }else{
+                criarProduto();
+            }
+            $("#dlgProdutos").modal('hide'); // fechar o modal do cadastro após clicar em salvar
+        });
+
         //função json para carregar os dados assim que a pagina for carregada
         $(function() {
-            carregarCategorias()
+            carregarCategorias();
+            carregarProdutos();
         });
 
     </script>
